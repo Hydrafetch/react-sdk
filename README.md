@@ -1,10 +1,14 @@
 # @hydrafetch/react
 
-Company logos in React, from a [Hydrafetch](https://hydrafetch.com) publishable key.
+[![npm](https://img.shields.io/npm/v/@hydrafetch/react)](https://www.npmjs.com/package/@hydrafetch/react)
+[![CI](https://github.com/Hydrafetch/react-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/Hydrafetch/react-sdk/actions/workflows/ci.yml)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/@hydrafetch/react)](https://bundlephobia.com/package/@hydrafetch/react)
 
-**738 bytes gzipped.** React is a peer dependency; the only real dependency is [`@hydrafetch/client-sdk`](https://github.com/Hydrafetch/client-sdk) at another 614 bytes.
+React components for company logos, powered by a [Hydrafetch](https://hydrafetch.com) publishable key.
 
-Logos bill against your plan's **logo pulls**, not credits.
+738 bytes gzipped. React is a peer dependency. Logos bill against logo pulls, not credits.
+
+## Installation
 
 ```bash
 npm install @hydrafetch/react
@@ -18,37 +22,19 @@ import { HydrafetchProvider, Logo } from '@hydrafetch/react';
 export default function App() {
   return (
     <HydrafetchProvider publishableKey={process.env.NEXT_PUBLIC_HYDRAFETCH_PK!}>
-      <Logo domain="stripe.com" size={32} />
+      <Logo domain="stripe.com" size={32} theme="auto" />
     </HydrafetchProvider>
   );
 }
 ```
 
-Get a publishable key in your [dashboard](https://app.hydrafetch.com), and lock it to your domains while you are there.
-
-## You may not need this
-
-The logo endpoint serves the image itself, so a plain `<img>` already works:
-
-```tsx
-<img src={`https://img.hydrafetch.com/logo/${domain}?token=${KEY}&size=32`} />
-```
-
-This package earns its ~700 bytes with three things that string cannot do:
-
-- **The key is set once** at the provider, not repeated at every call site.
-- **`theme="auto"` resolves in the browser** from `prefers-color-scheme`, and re-renders when the user switches. A server cannot know which one to send.
-- **Retina `srcSet`, lazy loading and alt text** come out right by default.
-
-If none of those matter to you, use the plain `<img>`. It is a supported way to use the product, not a workaround.
-
-## Logo pulls, not credits
-
-Logos are metered against `logoPullsPerCycle` on your plan and never touch your credit balance, so rendering a logo on every page view does not eat the budget you use for scraping.
+Create a publishable key in your [dashboard](https://app.hydrafetch.com) and restrict it to your domains.
 
 ## Components
 
 ### `<HydrafetchProvider>`
+
+Holds the key so it is not repeated at every call site.
 
 ```tsx
 <HydrafetchProvider publishableKey="hf_pk_..." baseUrl="https://img.hydrafetch.com">
@@ -56,7 +42,7 @@ Logos are metered against `logoPullsPerCycle` on your plan and never touch your 
 </HydrafetchProvider>
 ```
 
-Throws if handed anything that does not start with `hf_pk_`, so a secret key cannot reach your bundle by accident.
+Throws on any key that does not begin with `hf_pk_`, which prevents a secret key reaching a browser bundle.
 
 ### `<Logo>`
 
@@ -67,16 +53,18 @@ Throws if handed anything that does not start with `hf_pk_`, so a secret key can
 | Prop | Values | Notes |
 | --- | --- | --- |
 | `domain` | required | `https://www.stripe.com/pricing` is normalised to `stripe.com` |
-| `size` | pixels | adds a 2x `srcSet` |
-| `theme` | `light`, `dark`, `auto` | `auto` follows the system, live |
+| `size` | pixels, up to 512 | adds a 2x `srcSet` |
+| `theme` | `light`, `dark`, `auto` | `auto` follows the system preference |
 | `type` | `icon`, `wordmark` | defaults to the mark |
-| `fallback` | `monogram`, `404`, `transparent` | what a domain with no logo returns |
+| `fallback` | `monogram`, `404`, `transparent` | what an unknown domain returns |
 
-Any other `<img>` prop passes straight through. `alt` defaults to `"{domain} logo"` and is overridable.
+Any other image attribute passes through. `alt` defaults to `"{domain} logo"` and can be overridden.
+
+`theme="auto"` reads `prefers-color-scheme` in the browser and re-renders when the user changes it, which a server-rendered URL cannot do.
 
 ### `useLogoUrl(domain, options?)`
 
-For a background image, an `<Image>` from a framework, or anywhere you need the string rather than an element:
+Returns the URL string, for background images or a framework's own image component.
 
 ```tsx
 const src = useLogoUrl('stripe.com', { size: 64, theme: 'auto' });
@@ -84,13 +72,26 @@ const src = useLogoUrl('stripe.com', { size: 64, theme: 'auto' });
 
 ## Server components
 
-`<Logo>` is a client component: it reads `prefers-color-scheme`, so it needs the browser. In a React Server Component, either mark the boundary with `'use client'`, or skip this package and render the plain `<img>` shown above with an explicit `theme`.
+`<Logo>` is a client component because it reads `prefers-color-scheme`. In a React Server Component, either place it behind a `'use client'` boundary, or render a plain image with an explicit theme:
 
-## Not using React?
+```tsx
+<img src={`https://img.hydrafetch.com/logo/${domain}?token=${KEY}&size=32&theme=dark`} />
+```
 
-- [`@hydrafetch/client-sdk`](https://github.com/Hydrafetch/client-sdk) — the same URL builder, framework-free, 614 bytes
-- Or write the URL yourself. It is one line.
+## Billing
 
-For a company's full brand record, colours, fonts and socials, use a server-side client with a secret key: [Node](https://github.com/Hydrafetch/node-sdk) · [Python](https://github.com/Hydrafetch/python-sdk) · [Go](https://github.com/Hydrafetch/go-sdk) · [Ruby](https://github.com/Hydrafetch/ruby-sdk) · [Rust](https://github.com/Hydrafetch/rust-sdk) · [PHP](https://github.com/Hydrafetch/php-sdk)
+Logos are metered against `logoPullsPerCycle` on your plan and never draw on your credit balance, so rendering logos on every page view does not consume the budget used for scraping.
 
-MIT licensed.
+## Related packages
+
+- [`@hydrafetch/client-sdk`](https://github.com/Hydrafetch/client-sdk) — the same URL builder without React, 614 bytes
+- Server clients for the full API: [Node](https://github.com/Hydrafetch/node-sdk) · [Python](https://github.com/Hydrafetch/python-sdk) · [Go](https://github.com/Hydrafetch/go-sdk) · [Ruby](https://github.com/Hydrafetch/ruby-sdk) · [Rust](https://github.com/Hydrafetch/rust-sdk) · [PHP](https://github.com/Hydrafetch/php-sdk)
+
+## Links
+
+- [Documentation](https://docs.hydrafetch.com)
+- [OpenAPI specification](https://api.hydrafetch.com/openapi.json)
+
+## License
+
+MIT
