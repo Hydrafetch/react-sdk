@@ -1,0 +1,42 @@
+{
+  "name": "@hydrafetch/react",
+  "version": "0.1.0",
+  "description": "React components for company logos, powered by a Hydrafetch publishable key.",
+  "keywords": ["react", "logo", "company-logo", "favicon", "brand", "hydrafetch"],
+  "homepage": "https://hydrafetch.com",
+  "repository": { "type": "git", "url": "git+https://github.com/Hydrafetch/react-sdk.git" },
+  "bugs": "https://github.com/Hydrafetch/react-sdk/issues",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "peerDependencies": { "react": ">=18" },
+  "dependencies": { "@hydrafetch/client-sdk": "^0.1.0" },
+  "scripts": {
+    "build": "tsup src/index.tsx --format esm,cjs --dts --clean --minify --external react",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^19.0.0",
+    "jsdom": "^26.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "publishConfig": { "access": "public" }
+}
