@@ -22,7 +22,7 @@ import { HydrafetchProvider, Logo } from '@hydrafetch/react';
 export default function App() {
   return (
     <HydrafetchProvider publishableKey={process.env.NEXT_PUBLIC_HYDRAFETCH_PK!}>
-      <Logo domain="stripe.com" size={32} theme="auto" />
+      <Logo domain="stripe.com" size={32} />
     </HydrafetchProvider>
   );
 }
@@ -34,15 +34,21 @@ Create a publishable key in your [dashboard](https://app.hydrafetch.com) and res
 
 ### `<HydrafetchProvider>`
 
-Holds the key so it is not repeated at every call site.
+Holds the key so it is not repeated at every call site, and optionally the theme so every logo below it matches your page.
 
 ```tsx
-<HydrafetchProvider publishableKey="hf_pk_..." baseUrl="https://img.hydrafetch.com">
+<HydrafetchProvider publishableKey="hf_pk_..." theme={resolvedTheme}>
   {children}
 </HydrafetchProvider>
 ```
 
 Throws on any key that does not begin with `hf_pk_`, which prevents a secret key reaching a browser bundle.
+
+| Prop | Values | Notes |
+| --- | --- | --- |
+| `publishableKey` | required | must begin with `hf_pk_` |
+| `theme` | `light`, `dark`, `auto` | the default for every `Logo` and `useLogoUrl` beneath it |
+| `baseUrl` | a URL | defaults to `https://img.hydrafetch.com` |
 
 ### `<Logo>`
 
@@ -54,13 +60,29 @@ Throws on any key that does not begin with `hf_pk_`, which prevents a secret key
 | --- | --- | --- |
 | `domain` | required | `https://www.stripe.com/pricing` is normalised to `stripe.com` |
 | `size` | pixels, up to 512 | adds a 2x `srcSet` |
-| `theme` | `light`, `dark`, `auto` | `auto` follows the system preference |
+| `theme` | `light`, `dark`, `auto` | overrides the provider; `auto` follows the system preference |
 | `type` | `icon`, `wordmark` | defaults to the mark |
 | `fallback` | `monogram`, `404`, `transparent` | what an unknown domain returns |
 
 Any other image attribute passes through. `alt` defaults to `"{domain} logo"` and can be overridden.
 
-`theme="auto"` reads `prefers-color-scheme` in the browser and re-renders when the user changes it, which a server-rendered URL cannot do.
+### Getting the theme right
+
+A logo is usually one colour, and the wrong one is invisible rather than merely wrong. A white mark on a white card reads to your users as a missing logo.
+
+`theme="auto"` reads `prefers-color-scheme` in the browser and re-renders when the user changes it, which a server-rendered URL cannot do. That is the right choice **only if your app's theme follows the operating system**.
+
+If your app has its own light and dark toggle, pass the theme you resolved instead. Set it once on the provider and every logo follows:
+
+```tsx
+const { resolvedTheme } = useTheme();
+
+<HydrafetchProvider publishableKey={KEY} theme={resolvedTheme === 'dark' ? 'dark' : 'light'}>
+  <Logo domain="github.com" size={32} />
+</HydrafetchProvider>
+```
+
+Leaving `auto` on an app with a toggle breaks exactly when a visitor sets your toggle against their OS, which is when a broken logo is most visible.
 
 ### `useLogoUrl(domain, options?)`
 

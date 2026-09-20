@@ -86,3 +86,37 @@ describe('Logo', () => {
     quiet.mockRestore();
   });
 });
+
+describe('a provider theme, for an app whose theme is not the operating system', () => {
+  it('paints every logo beneath it for the theme the app resolved', () => {
+    render(
+      <HydrafetchProvider publishableKey={KEY} theme="dark">
+        <Logo domain="github.com" />
+      </HydrafetchProvider>,
+    );
+
+    expect(screen.getByRole('img').getAttribute('src')).toContain('theme=dark');
+  });
+
+  it('lets one logo override the provider', () => {
+    render(
+      <HydrafetchProvider publishableKey={KEY} theme="dark">
+        <Logo domain="github.com" theme="light" />
+      </HydrafetchProvider>,
+    );
+
+    expect(screen.getByRole('img').getAttribute('src')).toContain('theme=light');
+  });
+
+  it('still resolves auto against the operating system when that is what the app wants', () => {
+    mockColorScheme(true);
+
+    render(
+      <HydrafetchProvider publishableKey={KEY} theme="auto">
+        <Logo domain="github.com" />
+      </HydrafetchProvider>,
+    );
+
+    expect(screen.getByRole('img').getAttribute('src')).toContain('theme=dark');
+  });
+});

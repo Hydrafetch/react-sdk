@@ -15,6 +15,7 @@ export type { Fallback, LogoType, Theme };
 interface LogoContextValue {
   publishableKey: string;
   baseUrl?: string;
+  theme?: Theme;
 }
 
 const LogoContext = createContext<LogoContextValue | null>(null);
@@ -22,11 +23,20 @@ const LogoContext = createContext<LogoContextValue | null>(null);
 export interface HydrafetchProviderProps {
   publishableKey: string;
   baseUrl?: string;
+  theme?: Theme;
   children: ReactNode;
 }
 
-export function HydrafetchProvider({ publishableKey, baseUrl, children }: HydrafetchProviderProps) {
-  const value = useMemo(() => ({ publishableKey, baseUrl }), [publishableKey, baseUrl]);
+export function HydrafetchProvider({
+  publishableKey,
+  baseUrl,
+  theme,
+  children,
+}: HydrafetchProviderProps) {
+  const value = useMemo(
+    () => ({ publishableKey, baseUrl, theme }),
+    [publishableKey, baseUrl, theme],
+  );
 
   return <LogoContext.Provider value={value}>{children}</LogoContext.Provider>;
 }
@@ -66,16 +76,17 @@ export interface UseLogoUrlOptions {
 }
 
 export function useLogoUrl(domain: string, options: UseLogoUrlOptions = {}): string {
-  const { publishableKey, baseUrl } = useLogoContext();
-  const isAuto = options.theme === 'auto';
+  const { publishableKey, baseUrl, theme: contextTheme } = useLogoContext();
+  const wanted = options.theme ?? contextTheme;
+  const isAuto = wanted === 'auto';
   const prefersDark = usePrefersDark(isAuto);
 
   return useMemo(() => {
     const client = createLogoClient(publishableKey, baseUrl ? { baseUrl } : {});
-    const theme = isAuto ? (prefersDark ? 'dark' : 'light') : options.theme;
+    const theme = isAuto ? (prefersDark ? 'dark' : 'light') : wanted;
 
     return client.url(domain, { ...options, theme });
-  }, [publishableKey, baseUrl, domain, isAuto, prefersDark, options]);
+  }, [publishableKey, baseUrl, domain, isAuto, prefersDark, wanted, options]);
 }
 
 export interface LogoProps
@@ -88,16 +99,17 @@ export interface LogoProps
 }
 
 export function Logo({ domain, size, theme, type, fallback, alt, ...rest }: LogoProps) {
-  const { publishableKey, baseUrl } = useLogoContext();
-  const isAuto = theme === 'auto';
+  const { publishableKey, baseUrl, theme: contextTheme } = useLogoContext();
+  const wanted = theme ?? contextTheme;
+  const isAuto = wanted === 'auto';
   const prefersDark = usePrefersDark(isAuto);
 
   const props = useMemo(() => {
     const client = createLogoClient(publishableKey, baseUrl ? { baseUrl } : {});
-    const resolved = isAuto ? (prefersDark ? 'dark' : 'light') : theme;
+    const resolved = isAuto ? (prefersDark ? 'dark' : 'light') : wanted;
 
     return client.img(domain, { size, theme: resolved, type, fallback });
-  }, [publishableKey, baseUrl, domain, size, isAuto, prefersDark, theme, type, fallback]);
+  }, [publishableKey, baseUrl, domain, size, isAuto, prefersDark, wanted, type, fallback]);
 
   return (
     <img
